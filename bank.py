@@ -3,6 +3,10 @@ import customtkinter as ctk
 import json
 import os
 
+# BankSystem 변수
+MasterBank = 0
+
+
 # GUI 변수
 bankApp_size = 800
 
@@ -75,8 +79,45 @@ def StartGUI():
             placeholder_text="입금할 금액을 입력하세요",
             font=("맑은 고딕", 16)
         )
-
         deposit_entry.pack()
+
+        def Deposit():
+            global MasterBank
+
+            try:
+                amount = int(deposit_entry.get())
+
+                if amount <= 0:
+                    message_label.configure(
+                        text="0원보다 큰 금액을 입력해 주세요."
+                    )
+                    return
+
+                MasterBank += amount
+
+                balance_label.configure(
+                    text=f"{MasterBank:,}원"
+                )
+
+                message_label.configure(
+                    text=f"{amount:,}원이 입금되었습니다."
+                )
+
+                deposit_entry.delete(0, "end")
+
+            except ValueError:
+                message_label.configure(
+                    text="금액은 숫자로 입력해 주세요."
+                )
+
+        deposit_confirm_button = ctk.CTkButton(
+            input_frame,
+            text="입금 확인",
+            width=150,
+            height=40,
+            command=Deposit
+        )
+        deposit_confirm_button.pack(pady=10)
 
 
     def GUIWithdraw():
@@ -89,8 +130,51 @@ def StartGUI():
             placeholder_text="출금할 금액을 입력하세요",
             font=("맑은 고딕", 16)
         )
-
         withdraw_entry.pack()
+
+        def Withdraw():
+            global MasterBank
+
+            try:
+                amount = int(withdraw_entry.get())
+
+                if amount <= 0:
+                    message_label.configure(
+                        text="0원보다 큰 금액을 입력해 주세요."
+                    )
+                    return
+
+                if amount > MasterBank:
+                    message_label.configure(
+                        text="잔액이 부족합니다."
+                    )
+                    return
+
+                MasterBank -= amount
+
+                balance_label.configure(
+                    text=f"{MasterBank:,}원"
+                )
+
+                message_label.configure(
+                    text=f"{amount:,}원이 출금되었습니다."
+                )
+
+                withdraw_entry.delete(0, "end")
+
+            except ValueError:
+                message_label.configure(
+                    text="금액은 숫자로 입력해 주세요."
+                )
+
+        withdraw_confirm_button = ctk.CTkButton(
+            input_frame,
+            text="출금 확인",
+            width=150,
+            height=40,
+            command=Withdraw
+        )
+        withdraw_confirm_button.pack(pady=10)
 
     def GUIBalance():
         ClearInputFrame()
