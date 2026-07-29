@@ -2,13 +2,16 @@ import tkinter as tk
 import customtkinter as ctk
 import json
 import os
+from datetime import datetime
 
 # BankSystem 변수
 MasterBank = 0
+TransactionHistory = []
 
 
 # GUI 변수
 bankApp_size = 800
+
 
 def StartGUI():
     app = ctk.CTk()
@@ -38,54 +41,76 @@ def StartGUI():
         pady=20
     )
 
-    balance_frame = ctk.CTkFrame(
-        screen_frame,
-        fg_color="transparent"
+    button_frame = ctk.CTkFrame(main_frame, width=200)
+    button_frame.pack(
+        side="right",
+        fill="y",
+        padx=20,
+        pady=20
     )
-    balance_frame.pack(pady=(100, 0))
 
-    balance_text = ctk.CTkLabel(
-        balance_frame,
-        text="현재 잔액",
-        font=("맑은 고딕", 20)
+    message_frame = ctk.CTkFrame(app, height=70)
+    message_frame.pack(fill="x", padx=20, pady=20)
+
+    message_label = ctk.CTkLabel(
+        message_frame,
+        text="원하시는 업무를 선택해 주세요."
     )
-    balance_text.pack(pady=(0, 20))
+    message_label.pack(pady=20)
 
-    balance_label = ctk.CTkLabel(
-        balance_frame,
-        text="0원",
-        font=("맑은 고딕", 35, "bold")
-    )
-    balance_label.pack()
+    current_screen = "balance"
 
-    input_frame = ctk.CTkFrame(
-        screen_frame,
-        fg_color="transparent"
-    )
-    input_frame.pack(pady=(35, 10))
-
-
-    def ClearInputFrame():
-        for widget in input_frame.winfo_children():
+    def ClearScreen():
+        for widget in screen_frame.winfo_children():
             widget.destroy()
 
+    def ShowBalance():
+        balance_text = ctk.CTkLabel(
+            screen_frame,
+            text="현재 잔액",
+            font=("맑은 고딕", 20)
+        )
+        balance_text.pack(pady=(100, 20))
+
+        balance_label = ctk.CTkLabel(
+            screen_frame,
+            text=f"{MasterBank:,}원",
+            font=("맑은 고딕", 35, "bold")
+        )
+        balance_label.pack()
+
+        return balance_label
+
     def GUIDeposit():
-        ClearInputFrame()
+        nonlocal current_screen
+
+        ClearScreen()
+        current_screen = "deposit"
+
+        balance_label = ShowBalance()
 
         deposit_entry = ctk.CTkEntry(
-            input_frame,
+            screen_frame,
             width=300,
             height=45,
             placeholder_text="입금할 금액을 입력하세요",
             font=("맑은 고딕", 16)
         )
-        deposit_entry.pack()
+        deposit_entry.pack(pady=(35, 10))
 
         def Deposit():
-            global MasterBank
+            global MasterBank, TransactionHistory
 
             try:
-                amount = int(deposit_entry.get())
+                input_text = deposit_entry.get()
+            
+                if len(input_text) > 15:
+                    message_label.configure(
+                        text="금액은 최대 15자리까지만 입력 가능합니다"
+                    )
+                    return
+
+                amount = int(input_text)
 
                 if amount <= 0:
                     message_label.configure(
@@ -94,6 +119,16 @@ def StartGUI():
                     return
 
                 MasterBank += amount
+
+                now = datetime.now()
+
+                TransactionHistory.append({
+                    "type": "입금",
+                    "date": now.strftime("%Y-%m-%d"),
+                    "time": now.strftime("%H:%M:%S"),
+                    "amount": amount,
+                    "balance": MasterBank
+                })
 
                 balance_label.configure(
                     text=f"{MasterBank:,}원"
@@ -111,7 +146,7 @@ def StartGUI():
                 )
 
         deposit_confirm_button = ctk.CTkButton(
-            input_frame,
+            screen_frame,
             text="입금 확인",
             width=150,
             height=40,
@@ -119,24 +154,37 @@ def StartGUI():
         )
         deposit_confirm_button.pack(pady=10)
 
-
     def GUIWithdraw():
-        ClearInputFrame()
+        nonlocal current_screen
+
+        ClearScreen()
+        current_screen = "withdraw"
+
+        balance_label = ShowBalance()
 
         withdraw_entry = ctk.CTkEntry(
-            input_frame,
+            screen_frame,
             width=300,
             height=45,
             placeholder_text="출금할 금액을 입력하세요",
             font=("맑은 고딕", 16)
         )
-        withdraw_entry.pack()
+        withdraw_entry.pack(pady=(35, 10))
 
         def Withdraw():
-            global MasterBank
+            global MasterBank, TransactionHistory
 
             try:
-                amount = int(withdraw_entry.get())
+                input_text = withdraw_entry.get()
+
+
+                if len(input_text) > 15:
+                    message_label.configure(
+                    text="금액은 최대 15자리까지만 입력 가능합니다"
+                    )
+                    return
+                
+                amount = int(input_text)
 
                 if amount <= 0:
                     message_label.configure(
@@ -151,6 +199,16 @@ def StartGUI():
                     return
 
                 MasterBank -= amount
+
+                now = datetime.now()
+
+                TransactionHistory.append({
+                    "type": "출금",
+                    "date": now.strftime("%Y-%m-%d"),
+                    "time": now.strftime("%H:%M:%S"),
+                    "amount": amount,
+                    "balance": MasterBank
+                })
 
                 balance_label.configure(
                     text=f"{MasterBank:,}원"
@@ -168,7 +226,7 @@ def StartGUI():
                 )
 
         withdraw_confirm_button = ctk.CTkButton(
-            input_frame,
+            screen_frame,
             text="출금 확인",
             width=150,
             height=40,
@@ -177,23 +235,87 @@ def StartGUI():
         withdraw_confirm_button.pack(pady=10)
 
     def GUIBalance():
-        ClearInputFrame()
+        nonlocal current_screen
 
-        if balance_frame.winfo_manager():
-            balance_frame.pack_forget()
-        else:
-            balance_frame.pack(
-                before=input_frame,
-                pady=(100, 0)
+        if current_screen == "balance":
+            ClearScreen()
+            current_screen = "empty"
+
+            message_label.configure(
+                text="잔액 조회 화면을 닫았습니다."
             )
 
-    button_frame = ctk.CTkFrame(main_frame, width=200)
-    button_frame.pack(
-        side="right",
-        fill="y",
-        padx=20,
-        pady=20
-    )
+        else:
+            ClearScreen()
+            ShowBalance()
+
+            current_screen = "balance"
+
+            message_label.configure(
+                text=f"현재 잔액은 {MasterBank:,}원입니다."
+            )
+
+    def GUIHistory():
+        nonlocal current_screen
+
+        ClearScreen()
+        current_screen = "history"
+
+        history_frame = ctk.CTkScrollableFrame(
+            screen_frame,
+            label_text="거래 내역"
+        )
+        history_frame.pack(
+            fill="both",
+            expand=True,
+            padx=20,
+            pady=20
+        )
+
+        if len(TransactionHistory) == 0:
+            empty_label = ctk.CTkLabel(
+                history_frame,
+                text="거래 내역이 없습니다.",
+                font=("맑은 고딕", 16)
+            )
+            empty_label.pack(pady=30)
+
+            message_label.configure(
+                text="저장된 거래 내역이 없습니다."
+            )
+            return
+
+        for transaction in reversed(TransactionHistory):
+            history_item = ctk.CTkFrame(history_frame)
+            history_item.pack(
+                fill="x",
+                padx=10,
+                pady=5
+            )
+
+            if transaction["type"] == "입금":
+                amount_text = f'+{transaction["amount"]:,}원'
+            else:
+                amount_text = f'-{transaction["amount"]:,}원'
+
+            history_label = ctk.CTkLabel(
+                history_item,
+                text=(
+                    f'{transaction["type"]}  |  '
+                    f'{transaction["date"]} {transaction["time"]}  |  '
+                    f'{amount_text}  |  '
+                    f'잔액 {transaction["balance"]:,}원'
+                ),
+                font=("맑은 고딕", 13)
+            )
+            history_label.pack(
+                padx=10,
+                pady=12
+            )
+
+        message_label.configure(
+            text=f"총 {len(TransactionHistory)}개의 거래 내역입니다."
+        )
 
     deposit_button = ctk.CTkButton(
         button_frame,
@@ -226,7 +348,8 @@ def StartGUI():
         button_frame,
         text="거래 내역",
         width=150,
-        height=50
+        height=50,
+        command=GUIHistory
     )
     history_button.pack(padx=20, pady=10)
 
@@ -239,14 +362,7 @@ def StartGUI():
     )
     exit_button.pack(padx=20, pady=10)
 
-    message_frame = ctk.CTkFrame(app, height=70)
-    message_frame.pack(fill="x", padx=20, pady=20)
-
-    message_label = ctk.CTkLabel(
-        message_frame,
-        text="원하시는 업무를 선택해 주세요."
-    )
-    message_label.pack(pady=20)
+    ShowBalance()
 
     app.mainloop()
 
