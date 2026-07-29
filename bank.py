@@ -104,7 +104,7 @@ def StartGUI():
             try:
                 input_text = deposit_entry.get()
             
-                if len(input_text) > 15:
+                if len(input_text) > 10:
                     message_label.configure(
                         text="금액은 최대 15자리까지만 입력 가능합니다"
                     )
@@ -178,7 +178,7 @@ def StartGUI():
                 input_text = withdraw_entry.get()
 
 
-                if len(input_text) > 15:
+                if len(input_text) > 10:
                     message_label.configure(
                     text="금액은 최대 15자리까지만 입력 가능합니다"
                     )
@@ -306,7 +306,7 @@ def StartGUI():
                     f'{amount_text}  |  '
                     f'잔액 {transaction["balance"]:,}원'
                 ),
-                font=("맑은 고딕", 13)
+                font=("맑은 고딕", 11)
             )
             history_label.pack(
                 padx=10,
