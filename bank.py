@@ -7,10 +7,43 @@ from datetime import datetime
 # BankSystem 변수
 MasterBank = 0
 TransactionHistory = []
-
+BANK_DATA_FILE = "bank_data.json"
 
 # GUI 변수
 bankApp_size = 800
+
+
+def SaveBankData():
+    bank_data = {
+        "balance": MasterBank,
+        "history": TransactionHistory
+    }
+
+    with open(BANK_DATA_FILE, "w", encoding="utf-8") as file:
+        json.dump(
+            bank_data,
+            file,
+            ensure_ascii=False,
+            indent=4
+        )
+
+
+def LoadBankData():
+    global MasterBank, TransactionHistory
+
+    if not os.path.exists(BANK_DATA_FILE):
+        return
+
+    try:
+        with open(BANK_DATA_FILE, "r", encoding="utf-8") as file:
+            bank_data = json.load(file)
+
+        MasterBank = bank_data.get("balance", 0)
+        TransactionHistory = bank_data.get("history", [])
+
+    except (json.JSONDecodeError, OSError):
+        MasterBank = 0
+        TransactionHistory = []
 
 
 def StartGUI():
@@ -103,10 +136,10 @@ def StartGUI():
 
             try:
                 input_text = deposit_entry.get()
-            
-                if len(input_text) > 10:
+
+                if len(input_text) > 15:
                     message_label.configure(
-                        text="금액은 최대 15자리까지만 입력 가능합니다"
+                        text="금액은 최대 15자리까지만 입력 가능합니다."
                     )
                     return
 
@@ -129,6 +162,8 @@ def StartGUI():
                     "amount": amount,
                     "balance": MasterBank
                 })
+
+                SaveBankData()
 
                 balance_label.configure(
                     text=f"{MasterBank:,}원"
@@ -177,13 +212,12 @@ def StartGUI():
             try:
                 input_text = withdraw_entry.get()
 
-
-                if len(input_text) > 10:
+                if len(input_text) > 15:
                     message_label.configure(
-                    text="금액은 최대 15자리까지만 입력 가능합니다"
+                        text="금액은 최대 15자리까지만 입력 가능합니다."
                     )
                     return
-                
+
                 amount = int(input_text)
 
                 if amount <= 0:
@@ -209,6 +243,8 @@ def StartGUI():
                     "amount": amount,
                     "balance": MasterBank
                 })
+
+                SaveBankData()
 
                 balance_label.configure(
                     text=f"{MasterBank:,}원"
@@ -309,6 +345,7 @@ def StartGUI():
                 font=("맑은 고딕", 11)
             )
             history_label.pack(
+                fill="x",
                 padx=10,
                 pady=12
             )
@@ -368,4 +405,5 @@ def StartGUI():
 
 
 if __name__ == "__main__":
+    LoadBankData()
     StartGUI()
